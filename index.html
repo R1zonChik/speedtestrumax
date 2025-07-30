@@ -44,7 +44,6 @@
                         <div class="speed-value" id="downloadSpeed">0.00</div>
                         <div class="speed-unit">Мбит/с</div>
                     </div>
-                    
                     <div class="speed-item upload">
                         <div class="speed-label">⬆️ ОТДАЧА</div>
                         <div class="speed-value" id="uploadSpeed">0.00</div>
@@ -80,65 +79,69 @@
                             <div class="connection-value">Мульти</div>
                         </div>
                     </div>
-                    
-                    <div class="server-info">
-                        <div class="server-provider">
-                            <strong>РОСТЕЛЕКОМ</strong>
-                            <div class="server-location">Москва, Россия</div>
-                            <button class="change-server" id="changeServer">Сменить сервер</button>
+                </div>
+
+                <div class="provider-info">
+                    <div class="provider-details">
+                        <div class="provider-section">
+                            <div class="provider-label">🏢 Ваш провайдер</div>
+                            <div class="provider-name" id="providerDisplay">Определяется...</div>
                         </div>
-                        
-                        <div class="user-info">
-                            <div class="user-provider">Ваш провайдер</div>
-                            <div class="user-ip">
-                                <span id="ipDisplay">Определяется...</span>
-                            </div>
+                        <div class="location-section">
+                            <div class="location-label">📍 Местоположение</div>
+                            <div class="location-name" id="locationDisplay">Определяется...</div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="recommendation-section">
-                <h3>НАСКОЛЬКО ВЕРОЯТНО, ЧТО ВЫ ПОРЕКОМЕНДУЕТЕ SPEEDTESTRUMAX ДРУГУ ИЛИ КОЛЛЕГЕ?</h3>
-                <div class="rating-scale">
-                    <div class="rating-buttons" id="ratingButtons">
-                        <button class="rating-btn" data-score="0">0</button>
-                        <button class="rating-btn" data-score="1">1</button>
-                        <button class="rating-btn" data-score="2">2</button>
-                        <button class="rating-btn" data-score="3">3</button>
-                        <button class="rating-btn" data-score="4">4</button>
-                        <button class="rating-btn" data-score="5">5</button>
-                        <button class="rating-btn" data-score="6">6</button>
-                        <button class="rating-btn" data-score="7">7</button>
-                        <button class="rating-btn" data-score="8">8</button>
-                        <button class="rating-btn" data-score="9">9</button>
-                        <button class="rating-btn" data-score="10">10</button>
+                    <div class="user-info">
+                        <div class="user-ip-section">
+                            <div class="ip-label">🌐 Ваш IP</div>
+                            <div class="ip-value" id="ipDisplay">Определяется...</div>
+                        </div>
                     </div>
-                    <div class="rating-labels">
-                        <span>Совсем не вероятно</span>
-                        <span>Крайне вероятно</span>
-                    </div>
-                    <div class="rating-result" id="ratingResult"></div>
-                </div>
-            </div>
-
-            <div class="outages-section">
-                <h3>Проблемы с интернетом?</h3>
-                <p>Популярные сервисы с зарегистрированными проблемами</p>
-                <div class="outage-item">
-                    <span>Яндекс</span>
-                    <span class="outage-status">Возможные проблемы ⚠️</span>
-                </div>
-                <div class="outage-item">
-                    <span>ВКонтакте</span>
-                    <span class="outage-status">Возможные проблемы ⚠️</span>
-                </div>
-                <div class="outage-item">
-                    <span>Telegram</span>
-                    <span class="outage-status">Работает нормально ✅</span>
                 </div>
             </div>
         </main>
+
+        <div class="recommendation-section">
+            <h3>НАСКОЛЬКО ВЕРОЯТНО, ЧТО ВЫ ПОРЕКОМЕНДУЕТЕ SPEEDTESTRUMAX ДРУГУ ИЛИ КОЛЛЕГЕ?</h3>
+            <div class="rating-scale">
+                <div class="rating-buttons" id="ratingButtons">
+                    <button class="rating-btn" data-score="0">0</button>
+                    <button class="rating-btn" data-score="1">1</button>
+                    <button class="rating-btn" data-score="2">2</button>
+                    <button class="rating-btn" data-score="3">3</button>
+                    <button class="rating-btn" data-score="4">4</button>
+                    <button class="rating-btn" data-score="5">5</button>
+                    <button class="rating-btn" data-score="6">6</button>
+                    <button class="rating-btn" data-score="7">7</button>
+                    <button class="rating-btn" data-score="8">8</button>
+                    <button class="rating-btn" data-score="9">9</button>
+                    <button class="rating-btn" data-score="10">10</button>
+                </div>
+                <div class="rating-labels">
+                    <span>Совсем не вероятно</span>
+                    <span>Крайне вероятно</span>
+                </div>
+                <div class="rating-result" id="ratingResult"></div>
+            </div>
+        </div>
+
+        <div class="outages-section">
+            <h3>Проблемы с интернетом?</h3>
+            <p>Популярные сервисы с зарегистрированными проблемами</p>
+            <div class="outage-item">
+                <span>Яндекс</span>
+                <span class="outage-status">Возможные проблемы ⚠️</span>
+            </div>
+            <div class="outage-item">
+                <span>ВКонтакте</span>
+                <span class="outage-status">Возможные проблемы ⚠️</span>
+            </div>
+            <div class="outage-item">
+                <span>Telegram</span>
+                <span class="outage-status">Работает нормально ✅</span>
+            </div>
+        </div>
 
         <footer class="footer">
             <div class="footer-content">
@@ -147,38 +150,6 @@
                 <p class="disclaimer">⚖️ Все права авторов Speedtest.net охраняются, но нам по фигу™</p>
             </div>
         </footer>
-    </div>
-
-    <!-- Модальное окно выбора сервера -->
-    <div class="modal" id="serverModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Выберите сервер</h3>
-                <button class="modal-close" id="closeModal">✕</button>
-            </div>
-            <div class="server-list">
-                <div class="server-option" data-server="moscow">
-                    <span>🏛️ Москва - Ростелеком</span>
-                    <span class="server-ping">12 мс</span>
-                </div>
-                <div class="server-option" data-server="spb">
-                    <span>🏰 Санкт-Петербург - МТС</span>
-                    <span class="server-ping">25 мс</span>
-                </div>
-                <div class="server-option" data-server="nsk">
-                    <span>🏔️ Новосибирск - Билайн</span>
-                    <span class="server-ping">45 мс</span>
-                </div>
-                <div class="server-option" data-server="ekb">
-                    <span>🏭 Екатеринбург - Мегафон</span>
-                    <span class="server-ping">38 мс</span>
-                </div>
-                <div class="server-option" data-server="kzn">
-                    <span>🕌 Казань - Таттелеком</span>
-                    <span class="server-ping">42 мс</span>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script src="script.js"></script>
