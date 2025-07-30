@@ -5,8 +5,316 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpeedTestRumax - Тест скорости интернета</title>
     <meta name="description" content="Бесплатный тест скорости интернета в России. Проверьте скорость загрузки, отдачи и пинг.">
-    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #00d4ff, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .main {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .speedtest-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .speedtest-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #00d4ff, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .speedtest-header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+
+        .speedtest-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #00d4ff, #667eea);
+            border-color: #00d4ff;
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab-btn:hover::before {
+            left: 100%;
+        }
+
+        .speedtest-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #speedtest-frame {
+            width: 100%;
+            height: 600px;
+            border: none;
+            display: block;
+        }
+
+        .service-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .service-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .service-status {
+            padding: 5px 12px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer p {
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+
+        .footer a {
+            color: #00d4ff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+
+            .nav {
+                justify-content: center;
+            }
+
+            .speedtest-tabs {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .tab-btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            #speedtest-frame {
+                height: 500px;
+            }
+
+            .service-info {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .main {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .speedtest-tabs {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .speedtest-container {
+            animation: fadeIn 1s ease-out;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -18,123 +326,234 @@
             <nav class="nav">
                 <button class="nav-btn">Приложения</button>
                 <button class="nav-btn">О проекте</button>
-                <button class="nav-btn" id="settingsBtn">⚙️</button>
+                <button class="nav-btn">⚙️</button>
             </nav>
         </header>
 
         <main class="main">
-            <div class="speed-test-container">
-                <div class="test-info">
-                    <div class="share-section">
-                        <span>ПОДЕЛИТЬСЯ</span>
-                        <div class="share-buttons">
-                            <button class="share-btn" title="Копировать ссылку">📋</button>
-                            <button class="share-btn" title="Отправить по email">📧</button>
-                            <button class="share-btn" title="Поделиться в соцсетях">📱</button>
-                        </div>
-                    </div>
-                    <div class="result-id">
-                        <span>ID результата: <span id="resultId">RUMAX-${Math.random().toString(36).substr(2, 9)}</span></span>
-                    </div>
-                </div>
-
-                <div class="speed-display">
-                    <div class="speed-item download">
-                        <div class="speed-label">⬇️ ЗАГРУЗКА</div>
-                        <div class="speed-value" id="downloadSpeed">0.00</div>
-                        <div class="speed-unit">Мбит/с</div>
-                    </div>
-                    <div class="speed-item upload">
-                        <div class="speed-label">⬆️ ОТДАЧА</div>
-                        <div class="speed-value" id="uploadSpeed">0.00</div>
-                        <div class="speed-unit">Мбит/с</div>
-                    </div>
-                </div>
-
-                <div class="ping-section">
-                    <div class="ping-item">
-                        <span class="ping-label">Пинг</span>
-                        <span class="ping-value" id="pingValue">0</span>
-                        <span class="ping-unit">мс</span>
-                    </div>
-                    <div class="ping-item">
-                        <span class="ping-label">Джиттер</span>
-                        <span class="ping-value" id="jitterValue">0</span>
-                        <span class="ping-unit">мс</span>
-                    </div>
-                </div>
-
-                <div class="test-button-container">
-                    <button class="test-button" id="startTest">
-                        <span class="test-button-text">НАЧАТЬ ТЕСТ</span>
-                        <div class="test-progress" id="testProgress"></div>
-                    </button>
-                </div>
-
-                <div class="connection-info">
-                    <div class="connection-item">
-                        <div class="connection-icon">🌐</div>
-                        <div class="connection-details">
-                            <div class="connection-type">Соединения</div>
-                            <div class="connection-value">Мульти</div>
-                        </div>
-                    </div>
-                </div>
+            <div class="speedtest-header">
+                <h2>Тест скорости интернета</h2>
+                <p>Выберите сервис для проверки скорости вашего интернет-соединения</p>
             </div>
 
-            <div class="provider-info">
-                <div class="provider-details">
-                    <div class="provider-section">
-                        <div class="provider-label">🏢 Ваш провайдер</div>
-                        <div class="provider-name" id="providerDisplay">Определяется...</div>
-                    </div>
-                    <div class="location-section">
-                        <div class="location-label">📍 Местоположение</div>
-                        <div class="location-name" id="locationDisplay">Определяется...</div>
-                    </div>
+            <div class="service-info" id="service-info">
+                <div class="service-name" id="service-name">Fast.com (Netflix)</div>
+                <div class="service-status">Активен</div>
+            </div>
+
+            <div class="speedtest-tabs">
+                <button onclick="switchTest('fast')" class="tab-btn active" data-service="fast">
+                    🚀 Fast.com
+                </button>
+                <button onclick="switchTest('selectel')" class="tab-btn" data-service="selectel">
+                    🌐 Selectel
+                </button>
+                <button onclick="switchTest('2ip')" class="tab-btn" data-service="2ip">
+                    📊 2ip.ru
+                </button>
+                <button onclick="switchTest('beeline')" class="tab-btn" data-service="beeline">
+                    📱 Beeline
+                </button>
+                <button onclick="switchTest('yandex')" class="tab-btn" data-service="yandex">
+                    🔍 Яндекс
+                </button>
+            </div>
+
+            <div class="speedtest-container">
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="spinner"></div>
                 </div>
-                <div class="user-info">
-                    <div class="user-ip-section">
-                        <div class="ip-label">🌐 Ваш IP</div>
-                        <div class="ip-value" id="ipDisplay">Определяется...</div>
-                    </div>
-                </div>
+                <iframe id="speedtest-frame" 
+                        src="https://fast.com" 
+                        onload="hideLoading()">
+                </iframe>
             </div>
         </main>
 
-        <div class="recommendation-section">
-            <h3>НАСКОЛЬКО ВЕРОЯТНО, ЧТО ВЫ ПОРЕКОМЕНДУЕТЕ SPEEDTESTRUMAX ДРУГУ ИЛИ КОЛЛЕГЕ?</h3>
-            <div class="rating-scale">
-                <div class="rating-buttons" id="ratingButtons">
-                    <button class="rating-btn" data-score="0">0</button>
-                    <button class="rating-btn" data-score="1">1</button>
-                    <button class="rating-btn" data-score="2">2</button>
-                    <button class="rating-btn" data-score="3">3</button>
-                    <button class="rating-btn" data-score="4">4</button>
-                    <button class="rating-btn" data-score="5">5</button>
-                    <button class="rating-btn" data-score="6">6</button>
-                    <button class="rating-btn" data-score="7">7</button>
-                    <button class="rating-btn" data-score="8">8</button>
-                    <button class="rating-btn" data-score="9">9</button>
-                    <button class="rating-btn" data-score="10">10</button>
-                </div>
-                <div class="rating-labels">
-                    <span>Совсем не вероятно</span>
-                    <span>Крайне вероятно</span>
-                </div>
-                <div class="rating-result" id="ratingResult"></div>
-            </div>
-        </div>
-
         <footer class="footer">
-            <div class="footer-content">
-                <p>🎭 Сайт сделан по приколу. © 2025 SpeedTestRumax</p>
-                <p>Если хотите связаться - <a href="https://t.me/orythix" target="_blank">t.me/orythix</a></p>
-                <p class="disclaimer">⚖️ Все права авторов Speedtest.net охраняются, но нам по фигу™</p>
-            </div>
+            <p>🎭 Сайт сделан по приколу. © 2025 SpeedTestRumax</p>
+            <p>Если хотите связаться - <a href="https://t.me/orythix" target="_blank">t.me/orythix</a></p>
+            <p class="disclaimer">⚖️ Все права авторов сохраняются</p>
         </footer>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Конфигурация сервисов
+        const services = {
+            fast: {
+                url: 'https://fast.com',
+                name: 'Fast.com (Netflix)',
+                description: 'Быстрый тест от Netflix'
+            },
+            selectel: {
+                url: 'https://speedtest.selectel.ru/',
+                name: 'Selectel SpeedTest',
+                description: 'Российский провайдер Selectel'
+            },
+            '2ip': {
+                url: 'https://2ip.ru/speed/',
+                name: '2ip.ru SpeedTest',
+                description: 'Популярный российский сервис'
+            },
+            beeline: {
+                url: 'https://speedtest.beeline.ru/',
+                name: 'Beeline SpeedTest',
+                description: 'Официальный тест Билайн'
+            },
+            yandex: {
+                url: 'https://yandex.ru/internet/',
+                name: 'Яндекс.Интернетометр',
+                description: 'Тест скорости от Яндекса'
+            }
+        };
+
+        let currentService = 'fast';
+
+        function switchTest(service) {
+            if (currentService === service) return;
+            
+            currentService = service;
+            const frame = document.getElementById('speedtest-frame');
+            const buttons = document.querySelectorAll('.tab-btn');
+            const serviceInfo = document.getElementById('service-info');
+            const serviceName = document.getElementById('service-name');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            // Показываем загрузку
+            showLoading();
+            
+            // Убираем активный класс со всех кнопок
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Добавляем активный класс к выбранной кнопке
+            const activeButton = document.querySelector(`[data-service="${service}"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
+            
+            // Обновляем информацию о сервисе
+            if (services[service]) {
+                serviceName.textContent = services[service].name;
+                frame.src = services[service].url;
+            }
+            
+            // Добавляем анимацию переключения
+            serviceInfo.style.transform = 'translateY(-10px)';
+            serviceInfo.style.opacity = '0.7';
+            
+            setTimeout(() => {
+                serviceInfo.style.transform = 'translateY(0)';
+                serviceInfo.style.opacity = '1';
+            }, 200);
+            
+            // Сохраняем выбор в localStorage
+            localStorage.setItem('selectedSpeedTestService', service);
+            
+            console.log(`Переключено на: ${services[service].name}`);
+        }
+
+        function showLoading() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            setTimeout(() => {
+                loadingOverlay.classList.add('hidden');
+            }, 500);
+        }
+
+        // Восстанавливаем последний выбранный сервис
+        function restoreLastService() {
+            const lastService = localStorage.getItem('selectedSpeedTestService');
+            if (lastService && services[lastService]) {
+                switchTest(lastService);
+            }
+        }
+
+        // Обработка ошибок загрузки iframe
+        function handleIframeError() {
+            console.log('Ошибка загрузки iframe, пробуем альтернативный сервис');
+            if (currentService !== 'fast') {
+                switchTest('fast');
+            }
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Восстанавливаем последний сервис
+            restoreLastService();
+            
+            // Добавляем обработчик ошибок для iframe
+            const frame = document.getElementById('speedtest-frame');
+            frame.addEventListener('error', handleIframeError);
+            
+            // Анимация появления элементов
+            const elements = document.querySelectorAll('.tab-btn');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    el.style.transition = 'all 0.5s ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Добавляем уведомления
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#ff4757' : 'linear-gradient(135deg, #00d4ff, #667eea)'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                font-weight: 600;
+                animation: slideIn 0.3s ease;
+                max-width: 300px;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // CSS для анимаций уведомлений
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Показываем уведомление при первом посещении
+        if (!localStorage.getItem('firstVisit')) {
+            setTimeout(() => {
+                showNotification('Добро пожаловать! Выберите сервис для тестирования скорости.');
+                localStorage.setItem('firstVisit', 'true');
+            }, 1000);
+        }
+    </script>
 </body>
 </html>
