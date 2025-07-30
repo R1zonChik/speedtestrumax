@@ -3,15 +3,6 @@ class SpeedTestRumax {
         this.isRunning = false;
         this.userIP = null;
         this.selectedRating = null;
-        
-        // Реальные тестовые файлы разных размеров
-        this.testFiles = {
-            small: 'https://proof.ovh.net/files/1Mb.dat', // 1MB
-            medium: 'https://proof.ovh.net/files/10Mb.dat', // 10MB
-            large: 'https://proof.ovh.net/files/100Mb.dat', // 100MB
-            ping: 'https://httpbin.org/bytes/1024' // 1KB для пинга
-        };
-        
         this.init();
     }
 
@@ -25,7 +16,6 @@ class SpeedTestRumax {
     }
 
     bindEvents() {
-        // Кнопка начала теста
         document.getElementById('startTest').addEventListener('click', () => {
             if (!this.isRunning) {
                 this.startSpeedTest();
@@ -36,11 +26,9 @@ class SpeedTestRumax {
     async displayUserIP() {
         const ipDisplay = document.getElementById('ipDisplay');
         try {
-            // Пробуем несколько сервисов для получения IP
             const services = [
                 'https://api.ipify.org?format=json',
                 'https://ipapi.co/json/',
-                'https://api.myip.com',
                 'https://ipinfo.io/json'
             ];
 
@@ -48,8 +36,6 @@ class SpeedTestRumax {
                 try {
                     const response = await fetch(service);
                     const data = await response.json();
-                    
-                    // Разные сервисы возвращают IP в разных полях
                     const ip = data.ip || data.origin || data.query;
                     if (ip) {
                         this.userIP = ip;
@@ -60,8 +46,6 @@ class SpeedTestRumax {
                     continue;
                 }
             }
-            
-            // Если все сервисы недоступны
             ipDisplay.textContent = 'Не определен';
         } catch (error) {
             ipDisplay.textContent = 'Ошибка определения';
@@ -73,11 +57,9 @@ class SpeedTestRumax {
         const locationDisplay = document.getElementById('locationDisplay');
         
         try {
-            // Используем несколько сервисов для определения провайдера и местоположения
             const geoServices = [
                 'https://ipapi.co/json/',
-                'https://ipinfo.io/json',
-                'https://api.ipgeolocation.io/ipgeo?apiKey=free'
+                'https://ipinfo.io/json'
             ];
 
             for (const service of geoServices) {
@@ -87,18 +69,14 @@ class SpeedTestRumax {
                     
                     const data = await response.json();
                     
-                    // Определяем провайдера
                     let provider = data.org || data.isp || data.as || 'Не определен';
-                    
-                    // Очищаем название провайдера от технических префиксов
-                    provider = provider.replace(/^AS\d+\s+/i, ''); // Убираем AS номера
-                    provider = provider.replace(/\s+Inc\.?$/i, ''); // Убираем Inc.
-                    provider = provider.replace(/\s+LLC\.?$/i, ''); // Убираем LLC
-                    provider = provider.replace(/\s+Ltd\.?$/i, ''); // Убираем Ltd
+                    provider = provider.replace(/^AS\d+\s+/i, '');
+                    provider = provider.replace(/\s+Inc\.?$/i, '');
+                    provider = provider.replace(/\s+LLC\.?$/i, '');
+                    provider = provider.replace(/\s+Ltd\.?$/i, '');
                     
                     providerDisplay.textContent = provider;
                     
-                    // Определяем местоположение
                     const locationParts = [
                         data.city,
                         data.region || data.region_name,
@@ -111,7 +89,6 @@ class SpeedTestRumax {
                     
                     locationDisplay.textContent = location;
                     
-                    // Если получили данные, выходим из цикла
                     if (provider !== 'Не определен' || location !== 'Не определено') {
                         return;
                     }
@@ -120,7 +97,6 @@ class SpeedTestRumax {
                 }
             }
             
-            // Если все сервисы не сработали
             providerDisplay.textContent = 'Не определен';
             locationDisplay.textContent = 'Не определено';
             
@@ -150,12 +126,10 @@ class SpeedTestRumax {
         const ratingButtons = document.querySelectorAll('.rating-btn');
         const ratingResult = document.getElementById('ratingResult');
 
-        // Убираем выделение со всех кнопок
         ratingButtons.forEach(btn => {
             btn.classList.remove('selected', 'detractor', 'passive', 'promoter');
         });
 
-        // Выделяем выбранную кнопку и определяем категорию
         const selectedBtn = document.querySelector(`[data-score="${score}"]`);
         selectedBtn.classList.add('selected');
 
@@ -191,14 +165,14 @@ class SpeedTestRumax {
                 const text = `Проверил скорость интернета на SpeedTestRumax! ${url}`;
                 
                 switch (index) {
-                    case 0: // Копировать ссылку
+                    case 0:
                         this.copyToClipboard(url);
                         this.showNotification('Ссылка скопирована!');
                         break;
-                    case 1: // Email
+                    case 1:
                         window.open(`mailto:?subject=Тест скорости интернета&body=${encodeURIComponent(text)}`);
                         break;
-                    case 2: // Соцсети
+                    case 2:
                         if (navigator.share) {
                             navigator.share({
                                 title: 'SpeedTestRumax',
@@ -286,17 +260,17 @@ class SpeedTestRumax {
         try {
             this.resetValues();
             
-            // 1. РЕАЛЬНЫЙ тест пинга
+            // 1. Тест пинга
             buttonText.textContent = 'ИЗМЕРЕНИЕ ПИНГА...';
             progress.style.width = '20%';
             await this.testRealPing();
             
-            // 2. РЕАЛЬНЫЙ тест скорости загрузки
+            // 2. Тест скорости загрузки
             buttonText.textContent = 'ТЕСТ ЗАГРУЗКИ...';
             progress.style.width = '60%';
             await this.testRealDownload();
             
-            // 3. РЕАЛЬНЫЙ тест скорости отдачи
+            // 3. Тест скорости отдачи
             buttonText.textContent = 'ТЕСТ ОТДАЧИ...';
             progress.style.width = '90%';
             await this.testRealUpload();
@@ -334,26 +308,25 @@ class SpeedTestRumax {
         document.getElementById('jitterValue').textContent = '0';
     }
 
-    // РЕАЛЬНОЕ измерение пинга
+    // Исправленное измерение пинга
     async testRealPing() {
-        const pingTimes = [];
         const pingElement = document.getElementById('pingValue');
         const jitterElement = document.getElementById('jitterValue');
         
         const pingUrls = [
             'https://httpbin.org/get',
             'https://api.github.com',
-            'https://jsonplaceholder.typicode.com/posts/1',
-            'https://httpbin.org/uuid'
+            'https://jsonplaceholder.typicode.com/posts/1'
         ];
 
-        for (let i = 0; i < 10; i++) {
+        const pingTimes = [];
+
+        for (let i = 0; i < 8; i++) {
             const url = pingUrls[i % pingUrls.length] + '?t=' + Date.now();
             const startTime = performance.now();
             
             try {
                 const response = await fetch(url, {
-                    method: 'HEAD',
                     cache: 'no-cache',
                     mode: 'cors'
                 });
@@ -371,11 +344,10 @@ class SpeedTestRumax {
                 console.log('Ping error:', error);
             }
             
-            await this.sleep(100);
+            await this.sleep(200);
         }
 
         if (pingTimes.length > 0) {
-            // Вычисляем реальный джиттер
             const avgPing = pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length;
             const variance = pingTimes.reduce((sum, ping) => sum + Math.pow(ping - avgPing, 2), 0) / pingTimes.length;
             const jitter = Math.round(Math.sqrt(variance));
@@ -385,90 +357,74 @@ class SpeedTestRumax {
         }
     }
 
-    // РЕАЛЬНОЕ измерение скорости загрузки
+    // Исправленное измерение скорости загрузки
     async testRealDownload() {
         const downloadElement = document.getElementById('downloadSpeed');
-        let maxSpeed = 0;
         
-        try {
-            // Используем несколько файлов для точности
-            const testUrls = [
-                'https://proof.ovh.net/files/10Mb.dat',
-                'https://speedtest.selectel.ru/10MB.zip',
-                'https://mirror.yandex.ru/speedtest/10mb.bin',
-                'https://download.microsoft.com/download/2/0/E/20E90413-712F-438C-988E-FDAA79A8AC3D/dotnetfx35.exe'
-            ];
+        const testUrls = [
+            'https://proof.ovh.net/files/10Mb.dat',
+            'https://speedtest.selectel.ru/10MB.zip',
+            'https://httpbin.org/bytes/10485760', // 10MB
+            'https://httpbin.org/bytes/5242880'   // 5MB
+        ];
 
-            // Тестируем параллельно несколько соединений
-            const promises = testUrls.slice(0, 3).map(url => this.measureDownloadSpeed(url, downloadElement));
-            const results = await Promise.allSettled(promises);
+        try {
+            const speeds = await Promise.allSettled(
+                testUrls.map(url => this.simpleDownloadSpeed(url))
+            );
             
-            const successfulResults = results
-                .filter(result => result.status === 'fulfilled')
+            const successfulSpeeds = speeds
+                .filter(result => result.status === 'fulfilled' && result.value > 0)
                 .map(result => result.value);
 
-            if (successfulResults.length > 0) {
-                maxSpeed = Math.max(...successfulResults);
+            if (successfulSpeeds.length > 0) {
+                const maxSpeed = Math.max(...successfulSpeeds);
                 downloadElement.textContent = maxSpeed.toFixed(2);
+            } else {
+                downloadElement.textContent = '0.00';
             }
         } catch (error) {
             console.error('Download test error:', error);
-            // Fallback к простому тесту
-            await this.measureDownloadSpeed('https://httpbin.org/bytes/10485760', downloadElement);
+            downloadElement.textContent = '0.00';
         }
     }
 
-    async measureDownloadSpeed(url, element) {
-        const startTime = performance.now();
-        let totalBytes = 0;
-        
+    // Простой и надежный измеритель скорости загрузки
+    async simpleDownloadSpeed(url) {
         try {
-            const response = await fetch(url + '?t=' + Date.now(), {
-                cache: 'no-cache'
+            const startTime = performance.now();
+            const response = await fetch(url + '?t=' + Date.now(), { 
+                cache: 'no-cache',
+                mode: 'cors'
             });
             
             if (!response.ok) throw new Error('Network response was not ok');
             
-            const reader = response.body.getReader();
+            // Читаем весь файл
+            const blob = await response.blob();
+            const endTime = performance.now();
             
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                totalBytes += value.byteLength;
-                const currentTime = performance.now();
-                const duration = (currentTime - startTime) / 1000; // секунды
-                
-                if (duration > 0.5) { // Обновляем каждые 0.5 сек
-                    const speedMbps = (totalBytes * 8) / (duration * 1000000); // Мбит/с
-                    element.textContent = speedMbps.toFixed(2);
-                }
-                
-                // Останавливаем через 15 секунд
-                if (duration > 15) break;
-            }
+            const duration = (endTime - startTime) / 1000; // в секундах
+            const bytes = blob.size;
+            const mbps = (bytes * 8) / (duration * 1000000); // Мбит/с
             
-            const finalDuration = (performance.now() - startTime) / 1000;
-            const finalSpeed = (totalBytes * 8) / (finalDuration * 1000000);
-            return finalSpeed;
-            
+            return mbps;
         } catch (error) {
-            console.error('Download measurement error:', error);
+            console.error('Download speed measurement error:', error);
             return 0;
         }
     }
 
-    // РЕАЛЬНОЕ измерение скорости отдачи
+    // Исправленное измерение скорости отдачи
     async testRealUpload() {
         const uploadElement = document.getElementById('uploadSpeed');
         
         try {
-            // Создаем реальные данные для отправки
-            const testSizes = [1048576, 2097152, 5242880]; // 1MB, 2MB, 5MB
+            const testSizes = [1048576, 2097152]; // 1MB, 2MB
             let maxSpeed = 0;
             
             for (const size of testSizes) {
-                const speed = await this.measureUploadSpeed(size, uploadElement);
+                const speed = await this.measureUploadSpeed(size);
                 if (speed > maxSpeed) {
                     maxSpeed = speed;
                     uploadElement.textContent = speed.toFixed(2);
@@ -476,28 +432,27 @@ class SpeedTestRumax {
             }
         } catch (error) {
             console.error('Upload test error:', error);
+            uploadElement.textContent = '0.00';
         }
     }
 
-    async measureUploadSpeed(dataSize, element) {
+    async measureUploadSpeed(dataSize) {
         try {
-            // Создаем реальные данные
+            // Создаем тестовые данные
             const testData = new Uint8Array(dataSize);
             for (let i = 0; i < dataSize; i++) {
                 testData[i] = Math.floor(Math.random() * 256);
             }
 
-            const startTime = performance.now();
-
-            // Отправляем на несколько endpoint'ов
             const uploadUrls = [
                 'https://httpbin.org/post',
-                'https://postman-echo.com/post',
-                'https://reqres.in/api/users'
+                'https://postman-echo.com/post'
             ];
 
             for (const url of uploadUrls) {
                 try {
+                    const startTime = performance.now();
+                    
                     const response = await fetch(url, {
                         method: 'POST',
                         body: testData,
@@ -514,7 +469,7 @@ class SpeedTestRumax {
                         return speedMbps;
                     }
                 } catch (error) {
-                    continue; // Пробуем следующий URL
+                    continue;
                 }
             }
 
