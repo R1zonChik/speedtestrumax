@@ -22,10 +22,10 @@ class SpeedTestRumax {
         });
     }
 
-    // РАБОЧИЙ JSONP для IP и геолокации (ip-api.com поддерживает JSONP)
+    // РАБОЧИЙ JSONP через ip-api.com (НЕ ipapi.co!)
     displayUserIPAndGeo() {
         return new Promise((resolve) => {
-            const callbackName = 'ipCallback_' + Math.random().toString(36).substr(2, 9);
+            const callbackName = 'geoCallback_' + Math.random().toString(36).substr(2, 9);
             
             window[callbackName] = (data) => {
                 try {
@@ -54,9 +54,9 @@ class SpeedTestRumax {
                 resolve();
             };
             
-            // ip-api.com поддерживает JSONP
+            // ip-api.com поддерживает JSONP (НЕ ipapi.co!)
             const script = document.createElement('script');
-            script.src = `https://ip-api.com/json/?fields=query,isp,city,regionName,country&callback=${callbackName}`;
+            script.src = `http://ip-api.com/json/?fields=query,isp,city,regionName,country&callback=${callbackName}`;
             script.onerror = () => {
                 document.getElementById('ipDisplay').textContent = 'Не определен';
                 document.getElementById('providerDisplay').textContent = 'Не определен';
@@ -224,17 +224,17 @@ class SpeedTestRumax {
         try {
             this.resetValues();
             
-            // 1. РЕАЛЬНЫЙ тест пинга
+            // 1. Тест пинга
             buttonText.textContent = 'ИЗМЕРЕНИЕ ПИНГА...';
             progress.style.width = '20%';
             await this.testRealPing();
             
-            // 2. РЕАЛЬНЫЙ тест скорости загрузки
+            // 2. Тест скорости загрузки
             buttonText.textContent = 'ТЕСТ ЗАГРУЗКИ...';
             progress.style.width = '60%';
             await this.testRealDownload();
             
-            // 3. РЕАЛЬНЫЙ тест скорости отдачи
+            // 3. Тест скорости отдачи
             buttonText.textContent = 'ТЕСТ ОТДАЧИ...';
             progress.style.width = '90%';
             await this.testRealUpload();
@@ -272,7 +272,7 @@ class SpeedTestRumax {
         document.getElementById('jitterValue').textContent = '0';
     }
 
-    // РЕАЛЬНЫЙ тест пинга через Image объекты
+    // РЕАЛЬНЫЙ пинг через Image объекты к быстрым CDN
     async testRealPing() {
         const pingElement = document.getElementById('pingValue');
         const jitterElement = document.getElementById('jitterValue');
@@ -280,10 +280,10 @@ class SpeedTestRumax {
         
         // Используем быстрые CDN для реального пинга
         const pingUrls = [
-            'https://cdn.jsdelivr.net/gh/jquery/jquery@3.6.0/dist/jquery.min.js',
+            'https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js',
             'https://unpkg.com/react@18/umd/react.production.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js',
-            'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js'
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400&display=swap'
         ];
 
         for (let i = 0; i < 8; i++) {
@@ -345,7 +345,7 @@ class SpeedTestRumax {
         });
     }
 
-    // РЕАЛЬНЫЙ тест скорости загрузки через CDN с CORS
+    // РЕАЛЬНЫЙ тест скорости загрузки через публичные CDN
     async testRealDownload() {
         const downloadElement = document.getElementById('downloadSpeed');
         
@@ -387,7 +387,7 @@ class SpeedTestRumax {
             if (!response.ok) throw new Error('Network response was not ok');
             
             // Читаем весь файл
-            await response.arrayBuffer();
+            await response.text();
             
             const endTime = performance.now();
             const duration = (endTime - startTime) / 1000; // в секундах
