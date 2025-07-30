@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpeedTestRumax - Тест скорости интернета</title>
+    <meta name="description" content="Бесплатный тест скорости интернета в России. Проверьте скорость загрузки, отдачи и пинг.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">⚡</span>
+                <h1>SpeedTestRumax</h1>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn">Приложения</button>
+                <button class="nav-btn">О проекте</button>
+                <button class="nav-btn" id="settingsBtn">⚙️</button>
+            </nav>
+        </header>
+
+        <main class="main">
+            <div class="speed-test-container">
+                <div class="test-info">
+                    <div class="share-section">
+                        <span>ПОДЕЛИТЬСЯ</span>
+                        <div class="share-buttons">
+                            <button class="share-btn" title="Копировать ссылку">📋</button>
+                            <button class="share-btn" title="Отправить по email">📧</button>
+                            <button class="share-btn" title="Поделиться в соцсетях">📱</button>
+                        </div>
+                    </div>
+                    <div class="result-id">
+                        <span>ID результата: <span id="resultId">RUMAX-${Math.random().toString(36).substr(2, 9)}</span></span>
+                    </div>
+                </div>
+
+                <div class="speed-display">
+                    <div class="speed-item download">
+                        <div class="speed-label">⬇️ ЗАГРУЗКА</div>
+                        <div class="speed-value" id="downloadSpeed">0.00</div>
+                        <div class="speed-unit">Мбит/с</div>
+                    </div>
+                    
+                    <div class="speed-item upload">
+                        <div class="speed-label">⬆️ ОТДАЧА</div>
+                        <div class="speed-value" id="uploadSpeed">0.00</div>
+                        <div class="speed-unit">Мбит/с</div>
+                    </div>
+                </div>
+
+                <div class="ping-section">
+                    <div class="ping-item">
+                        <span class="ping-label">Пинг</span>
+                        <span class="ping-value" id="pingValue">0</span>
+                        <span class="ping-unit">мс</span>
+                    </div>
+                    <div class="ping-item">
+                        <span class="ping-label">Джиттер</span>
+                        <span class="ping-value" id="jitterValue">0</span>
+                        <span class="ping-unit">мс</span>
+                    </div>
+                </div>
+
+                <div class="test-button-container">
+                    <button class="test-button" id="startTest">
+                        <span class="test-button-text">НАЧАТЬ ТЕСТ</span>
+                        <div class="test-progress" id="testProgress"></div>
+                    </button>
+                </div>
+
+                <div class="connection-info">
+                    <div class="connection-item">
+                        <div class="connection-icon">🌐</div>
+                        <div class="connection-details">
+                            <div class="connection-type">Соединения</div>
+                            <div class="connection-value">Мульти</div>
+                        </div>
+                    </div>
+                    
+                    <div class="server-info">
+                        <div class="server-provider">
+                            <strong>РОСТЕЛЕКОМ</strong>
+                            <div class="server-location">Москва, Россия</div>
+                            <button class="change-server" id="changeServer">Сменить сервер</button>
+                        </div>
+                        
+                        <div class="user-info">
+                            <div class="user-provider">Ваш провайдер</div>
+                            <div class="user-ip">
+                                <span id="ipDisplay">Определяется...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recommendation-section">
+                <h3>НАСКОЛЬКО ВЕРОЯТНО, ЧТО ВЫ ПОРЕКОМЕНДУЕТЕ SPEEDTESTRUMAX ДРУГУ ИЛИ КОЛЛЕГЕ?</h3>
+                <div class="rating-scale">
+                    <div class="rating-buttons" id="ratingButtons">
+                        <button class="rating-btn" data-score="0">0</button>
+                        <button class="rating-btn" data-score="1">1</button>
+                        <button class="rating-btn" data-score="2">2</button>
+                        <button class="rating-btn" data-score="3">3</button>
+                        <button class="rating-btn" data-score="4">4</button>
+                        <button class="rating-btn" data-score="5">5</button>
+                        <button class="rating-btn" data-score="6">6</button>
+                        <button class="rating-btn" data-score="7">7</button>
+                        <button class="rating-btn" data-score="8">8</button>
+                        <button class="rating-btn" data-score="9">9</button>
+                        <button class="rating-btn" data-score="10">10</button>
+                    </div>
+                    <div class="rating-labels">
+                        <span>Совсем не вероятно</span>
+                        <span>Крайне вероятно</span>
+                    </div>
+                    <div class="rating-result" id="ratingResult"></div>
+                </div>
+            </div>
+
+            <div class="outages-section">
+                <h3>Проблемы с интернетом?</h3>
+                <p>Популярные сервисы с зарегистрированными проблемами</p>
+                <div class="outage-item">
+                    <span>Яндекс</span>
+                    <span class="outage-status">Возможные проблемы ⚠️</span>
+                </div>
+                <div class="outage-item">
+                    <span>ВКонтакте</span>
+                    <span class="outage-status">Возможные проблемы ⚠️</span>
+                </div>
+                <div class="outage-item">
+                    <span>Telegram</span>
+                    <span class="outage-status">Работает нормально ✅</span>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <p>🎭 Сайт сделан по приколу. © 2024 SpeedTestRumax</p>
+                <p>Если хотите связаться - <a href="https://t.me/orythix" target="_blank">t.me/orythix</a></p>
+                <p class="disclaimer">⚖️ Все права авторов Speedtest.net охраняются, но нам по фигу™</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Модальное окно выбора сервера -->
+    <div class="modal" id="serverModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Выберите сервер</h3>
+                <button class="modal-close" id="closeModal">✕</button>
+            </div>
+            <div class="server-list">
+                <div class="server-option" data-server="moscow">
+                    <span>🏛️ Москва - Ростелеком</span>
+                    <span class="server-ping">12 мс</span>
+                </div>
+                <div class="server-option" data-server="spb">
+                    <span>🏰 Санкт-Петербург - МТС</span>
+                    <span class="server-ping">25 мс</span>
+                </div>
+                <div class="server-option" data-server="nsk">
+                    <span>🏔️ Новосибирск - Билайн</span>
+                    <span class="server-ping">45 мс</span>
+                </div>
+                <div class="server-option" data-server="ekb">
+                    <span>🏭 Екатеринбург - Мегафон</span>
+                    <span class="server-ping">38 мс</span>
+                </div>
+                <div class="server-option" data-server="kzn">
+                    <span>🕌 Казань - Таттелеком</span>
+                    <span class="server-ping">42 мс</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
