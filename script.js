@@ -8,7 +8,7 @@ class SpeedTestRumax {
 
     async init() {
         this.bindEvents();
-        await this.displayUserInfo();
+        await this.displayUserIPAndGeo();
         this.generateResultId();
         this.initRatingSystem();
         this.initShareButtons();
@@ -22,50 +22,52 @@ class SpeedTestRumax {
         });
     }
 
-    // Определяем пользователя без внешних API
-    async displayUserInfo() {
-        // Генерируем реалистичный IP на основе российских провайдеров
-        const russianIPRanges = [
-            '193.233.', '95.165.', '178.176.', '46.39.', '85.143.',
-            '188.162.', '109.195.', '37.110.', '5.101.', '217.118.'
-        ];
-        
-        const randomRange = russianIPRanges[Math.floor(Math.random() * russianIPRanges.length)];
-        const ip = randomRange + Math.floor(Math.random() * 255) + '.' + Math.floor(Math.random() * 255);
-        
-        document.getElementById('ipDisplay').textContent = ip;
-        this.userIP = ip;
-
-        // Реалистичные российские провайдеры
-        const providers = [
-            'FATTAKHOV RINAT RASHITOVICH',
-            'Rostelecom',
-            'MTS PJSC',
-            'VimpelCom',
-            'T2 Mobile LLC',
-            'ER-Telecom Holding',
-            'TTK',
-            'Megafon',
-            'Beeline',
-            'Tele2'
-        ];
-
-        const locations = [
-            'Syzran, Samara Oblast, RU',
-            'Moscow, Moscow, RU', 
-            'Saint Petersburg, Saint Petersburg, RU',
-            'Novosibirsk, Novosibirsk Oblast, RU',
-            'Yekaterinburg, Sverdlovsk Oblast, RU',
-            'Kazan, Republic of Tatarstan, RU',
-            'Nizhny Novgorod, Nizhny Novgorod Oblast, RU',
-            'Chelyabinsk, Chelyabinsk Oblast, RU'
-        ];
-
-        const randomProvider = providers[Math.floor(Math.random() * providers.length)];
-        const randomLocation = locations[Math.floor(Math.random() * locations.length)];
-
-        document.getElementById('providerDisplay').textContent = randomProvider;
-        document.getElementById('locationDisplay').textContent = randomLocation;
+    // РАБОЧИЙ JSONP для IP и геолокации (ip-api.com поддерживает JSONP)
+    displayUserIPAndGeo() {
+        return new Promise((resolve) => {
+            const callbackName = 'ipCallback_' + Math.random().toString(36).substr(2, 9);
+            
+            window[callbackName] = (data) => {
+                try {
+                    // IP адрес
+                    document.getElementById('ipDisplay').textContent = data.query || 'Не определен';
+                    this.userIP = data.query;
+                    
+                    // Провайдер
+                    document.getElementById('providerDisplay').textContent = data.isp || 'Не определен';
+                    
+                    // Местоположение
+                    const location = [data.city, data.regionName, data.country]
+                        .filter(Boolean).join(', ') || 'Не определено';
+                    document.getElementById('locationDisplay').textContent = location;
+                    
+                } catch (error) {
+                    console.error('Error processing geo data:', error);
+                    document.getElementById('ipDisplay').textContent = 'Ошибка';
+                    document.getElementById('providerDisplay').textContent = 'Ошибка';
+                    document.getElementById('locationDisplay').textContent = 'Ошибка';
+                }
+                
+                // Очистка
+                if (script.parentNode) script.parentNode.removeChild(script);
+                delete window[callbackName];
+                resolve();
+            };
+            
+            // ip-api.com поддерживает JSONP
+            const script = document.createElement('script');
+            script.src = `https://ip-api.com/json/?fields=query,isp,city,regionName,country&callback=${callbackName}`;
+            script.onerror = () => {
+                document.getElementById('ipDisplay').textContent = 'Не определен';
+                document.getElementById('providerDisplay').textContent = 'Не определен';
+                document.getElementById('locationDisplay').textContent = 'Не определено';
+                if (script.parentNode) script.parentNode.removeChild(script);
+                delete window[callbackName];
+                resolve();
+            };
+            
+            document.head.appendChild(script);
+        });
     }
 
     generateResultId() {
@@ -222,20 +224,20 @@ class SpeedTestRumax {
         try {
             this.resetValues();
             
-            // 1. Тест пинга
+            // 1. РЕАЛЬНЫЙ тест пинга
             buttonText.textContent = 'ИЗМЕРЕНИЕ ПИНГА...';
             progress.style.width = '20%';
-            await this.testRealisticPing();
+            await this.testRealPing();
             
-            // 2. Тест скорости загрузки
+            // 2. РЕАЛЬНЫЙ тест скорости загрузки
             buttonText.textContent = 'ТЕСТ ЗАГРУЗКИ...';
             progress.style.width = '60%';
-            await this.testRealisticDownload();
+            await this.testRealDownload();
             
-            // 3. Тест скорости отдачи
+            // 3. РЕАЛЬНЫЙ тест скорости отдачи
             buttonText.textContent = 'ТЕСТ ОТДАЧИ...';
             progress.style.width = '90%';
-            await this.testRealisticUpload();
+            await this.testRealUpload();
             
             // Завершение
             progress.style.width = '100%';
@@ -270,96 +272,205 @@ class SpeedTestRumax {
         document.getElementById('jitterValue').textContent = '0';
     }
 
-    // Реалистичный тест пинга
-    async testRealisticPing() {
+    // РЕАЛЬНЫЙ тест пинга через Image объекты
+    async testRealPing() {
         const pingElement = document.getElementById('pingValue');
         const jitterElement = document.getElementById('jitterValue');
-        
         const pingTimes = [];
         
-        // Симулируем реальные измерения пинга
+        // Используем быстрые CDN для реального пинга
+        const pingUrls = [
+            'https://cdn.jsdelivr.net/gh/jquery/jquery@3.6.0/dist/jquery.min.js',
+            'https://unpkg.com/react@18/umd/react.production.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js',
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js'
+        ];
+
         for (let i = 0; i < 8; i++) {
-            // Базовый пинг для российских провайдеров: 15-80ms
-            const basePing = 20 + Math.random() * 60;
+            const url = pingUrls[i % pingUrls.length];
             
-            // Добавляем реалистичный джиттер
-            const jitter = (Math.random() - 0.5) * 20;
-            const pingTime = Math.max(5, Math.round(basePing + jitter));
-            
-            pingTimes.push(pingTime);
-            
-            // Обновляем в реальном времени
-            const avgPing = Math.round(pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length);
-            pingElement.textContent = avgPing;
+            try {
+                const pingTime = await this.measureRealPing(url);
+                if (pingTime > 0 && pingTime < 2000) {
+                    pingTimes.push(pingTime);
+                    
+                    // Обновляем в реальном времени
+                    const avgPing = Math.round(pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length);
+                    pingElement.textContent = avgPing;
+                }
+            } catch (error) {
+                console.log('Ping measurement error:', error);
+            }
             
             await this.sleep(200);
         }
 
-        // Вычисляем финальные значения
-        const avgPing = pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length;
-        const variance = pingTimes.reduce((sum, ping) => sum + Math.pow(ping - avgPing, 2), 0) / pingTimes.length;
-        const jitter = Math.round(Math.sqrt(variance));
-        
-        pingElement.textContent = Math.round(avgPing);
-        jitterElement.textContent = Math.max(1, jitter);
+        if (pingTimes.length > 0) {
+            const avgPing = pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length;
+            const variance = pingTimes.reduce((sum, ping) => sum + Math.pow(ping - avgPing, 2), 0) / pingTimes.length;
+            const jitter = Math.round(Math.sqrt(variance));
+            
+            pingElement.textContent = Math.round(avgPing);
+            jitterElement.textContent = Math.max(1, jitter);
+        }
     }
 
-    // Реалистичный тест скорости загрузки
-    async testRealisticDownload() {
+    // Реальное измерение пинга через fetch с таймаутом
+    async measureRealPing(url) {
+        return new Promise((resolve) => {
+            const startTime = performance.now();
+            const controller = new AbortController();
+            
+            // Таймаут 3 секунды
+            const timeoutId = setTimeout(() => {
+                controller.abort();
+                resolve(0);
+            }, 3000);
+            
+            fetch(url, { 
+                method: 'HEAD',
+                cache: 'no-cache',
+                signal: controller.signal
+            })
+            .then(() => {
+                clearTimeout(timeoutId);
+                const endTime = performance.now();
+                resolve(Math.round(endTime - startTime));
+            })
+            .catch(() => {
+                clearTimeout(timeoutId);
+                const endTime = performance.now();
+                resolve(Math.round(endTime - startTime));
+            });
+        });
+    }
+
+    // РЕАЛЬНЫЙ тест скорости загрузки через CDN с CORS
+    async testRealDownload() {
         const downloadElement = document.getElementById('downloadSpeed');
         
-        // Реалистичные скорости для российских провайдеров
-        const connectionTypes = [
-            { name: 'ADSL', min: 5, max: 25 },      // 5-25 Мбит/с
-            { name: 'Cable', min: 30, max: 100 },   // 30-100 Мбит/с  
-            { name: 'Fiber', min: 50, max: 200 },   // 50-200 Мбит/с
-            { name: 'Mobile', min: 10, max: 80 }    // 10-80 Мбит/с
+        // Используем публичные CDN файлы с известными размерами
+        const testFiles = [
+            { url: 'https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js', size: 89000 },
+            { url: 'https://unpkg.com/react@18/umd/react.development.js', size: 1000000 },
+            { url: 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js', size: 600000 }
         ];
-        
-        // Выбираем случайный тип соединения
-        const connectionType = connectionTypes[Math.floor(Math.random() * connectionTypes.length)];
-        
-        // Симулируем процесс измерения
-        let currentSpeed = 0;
-        const targetSpeed = connectionType.min + Math.random() * (connectionType.max - connectionType.min);
-        
-        for (let i = 0; i < 10; i++) {
-            // Постепенно приближаемся к целевой скорости
-            const progress = (i + 1) / 10;
-            currentSpeed = targetSpeed * progress + (Math.random() - 0.5) * 5;
-            currentSpeed = Math.max(1, currentSpeed);
-            
-            downloadElement.textContent = currentSpeed.toFixed(2);
-            await this.sleep(300);
+
+        let maxSpeed = 0;
+
+        for (const file of testFiles) {
+            try {
+                const speed = await this.measureRealDownloadSpeed(file.url, file.size);
+                if (speed > maxSpeed) {
+                    maxSpeed = speed;
+                    downloadElement.textContent = speed.toFixed(2);
+                }
+            } catch (error) {
+                console.log('Download test error:', error);
+            }
         }
-        
-        // Финальное значение
-        downloadElement.textContent = targetSpeed.toFixed(2);
+
+        if (maxSpeed === 0) {
+            downloadElement.textContent = '0.00';
+        }
     }
 
-    // Реалистичный тест скорости отдачи
-    async testRealisticUpload() {
+    // Реальное измерение скорости загрузки
+    async measureRealDownloadSpeed(url, sizeBytes) {
+        try {
+            const startTime = performance.now();
+            
+            const response = await fetch(url + '?t=' + Date.now(), { 
+                cache: 'no-cache'
+            });
+            
+            if (!response.ok) throw new Error('Network response was not ok');
+            
+            // Читаем весь файл
+            await response.arrayBuffer();
+            
+            const endTime = performance.now();
+            const duration = (endTime - startTime) / 1000; // в секундах
+            
+            // Вычисляем скорость
+            const mbps = (sizeBytes * 8) / (duration * 1000000); // Мбит/с
+            
+            return mbps > 0 ? mbps : 0;
+        } catch (error) {
+            console.error('Download speed measurement error:', error);
+            return 0;
+        }
+    }
+
+    // РЕАЛЬНЫЙ тест скорости отдачи
+    async testRealUpload() {
         const uploadElement = document.getElementById('uploadSpeed');
         
-        // Скорость отдачи обычно в 3-10 раз меньше загрузки
-        const downloadSpeed = parseFloat(document.getElementById('downloadSpeed').textContent);
-        const uploadRatio = 0.1 + Math.random() * 0.4; // 10-50% от скорости загрузки
-        
-        let currentSpeed = 0;
-        const targetSpeed = downloadSpeed * uploadRatio;
-        
-        for (let i = 0; i < 8; i++) {
-            // Постепенно приближаемся к целевой скорости
-            const progress = (i + 1) / 8;
-            currentSpeed = targetSpeed * progress + (Math.random() - 0.5) * 2;
-            currentSpeed = Math.max(0.5, currentSpeed);
+        try {
+            const testSizes = [50000, 100000]; // 50KB, 100KB
+            let maxSpeed = 0;
             
-            uploadElement.textContent = currentSpeed.toFixed(2);
-            await this.sleep(250);
+            for (const size of testSizes) {
+                const speed = await this.measureRealUploadSpeed(size);
+                if (speed > maxSpeed) {
+                    maxSpeed = speed;
+                    uploadElement.textContent = speed.toFixed(2);
+                }
+            }
+            
+            if (maxSpeed === 0) {
+                uploadElement.textContent = '0.00';
+            }
+        } catch (error) {
+            console.error('Upload test error:', error);
+            uploadElement.textContent = '0.00';
         }
-        
-        // Финальное значение
-        uploadElement.textContent = targetSpeed.toFixed(2);
+    }
+
+    async measureRealUploadSpeed(dataSize) {
+        try {
+            // Создаем реальные данные
+            const testData = new Uint8Array(dataSize);
+            for (let i = 0; i < dataSize; i++) {
+                testData[i] = Math.floor(Math.random() * 256);
+            }
+
+            // Используем рабочие endpoints
+            const uploadUrls = [
+                'https://httpbin.org/post',
+                'https://postman-echo.com/post',
+                'https://reqres.in/api/users'
+            ];
+
+            for (const url of uploadUrls) {
+                try {
+                    const startTime = performance.now();
+                    
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: testData,
+                        cache: 'no-cache',
+                        headers: {
+                            'Content-Type': 'application/octet-stream'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const endTime = performance.now();
+                        const duration = (endTime - startTime) / 1000; // секунды
+                        const speedMbps = (dataSize * 8) / (duration * 1000000); // Мбит/с
+                        return speedMbps > 0 ? speedMbps : 0;
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+
+            return 0;
+        } catch (error) {
+            console.error('Upload measurement error:', error);
+            return 0;
+        }
     }
 
     sleep(ms) {
