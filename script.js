@@ -1,37 +1,29 @@
 class SpeedTestRumax {
     constructor() {
         this.isRunning = false;
-        this.currentServer = 'moscow';
         this.userIP = null;
         this.selectedRating = null;
         
         // Реальные тестовые файлы разных размеров
         this.testFiles = {
-            small: 'https://proof.ovh.net/files/1Mb.dat',      // 1MB
-            medium: 'https://proof.ovh.net/files/10Mb.dat',   // 10MB  
-            large: 'https://proof.ovh.net/files/100Mb.dat',   // 100MB
-            ping: 'https://httpbin.org/bytes/1024'            // 1KB для пинга
-        };
-        
-        this.servers = {
-            moscow: { name: 'Москва - Ростелеком', ping: 12 },
-            spb: { name: 'Санкт-Петербург - МТС', ping: 25 },
-            nsk: { name: 'Новосибирск - Билайн', ping: 45 },
-            ekb: { name: 'Екатеринбург - Мегафон', ping: 38 },
-            kzn: { name: 'Казань - Таттелеком', ping: 42 }
+            small: 'https://proof.ovh.net/files/1Mb.dat', // 1MB
+            medium: 'https://proof.ovh.net/files/10Mb.dat', // 10MB
+            large: 'https://proof.ovh.net/files/100Mb.dat', // 100MB
+            ping: 'https://httpbin.org/bytes/1024' // 1KB для пинга
         };
         
         this.init();
     }
-    
-    init() {
+
+    async init() {
         this.bindEvents();
-        this.displayUserIP();
+        await this.displayUserIP();
+        await this.displayUserGeo();
         this.generateResultId();
         this.initRatingSystem();
         this.initShareButtons();
     }
-    
+
     bindEvents() {
         // Кнопка начала теста
         document.getElementById('startTest').addEventListener('click', () => {
@@ -39,36 +31,10 @@ class SpeedTestRumax {
                 this.startSpeedTest();
             }
         });
-        
-        // Смена сервера
-        document.getElementById('changeServer').addEventListener('click', () => {
-            this.showServerModal();
-        });
-        
-        // Модальное окно
-        document.getElementById('closeModal').addEventListener('click', () => {
-            this.hideServerModal();
-        });
-        
-        // Выбор сервера
-        document.querySelectorAll('.server-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                const serverId = e.currentTarget.dataset.server;
-                this.selectServer(serverId);
-            });
-        });
-        
-        // Закрытие модального окна по клику вне его
-        document.getElementById('serverModal').addEventListener('click', (e) => {
-            if (e.target.id === 'serverModal') {
-                this.hideServerModal();
-            }
-        });
     }
-    
+
     async displayUserIP() {
         const ipDisplay = document.getElementById('ipDisplay');
-        
         try {
             // Пробуем несколько сервисов для получения IP
             const services = [
@@ -77,7 +43,7 @@ class SpeedTestRumax {
                 'https://api.myip.com',
                 'https://ipinfo.io/json'
             ];
-            
+
             for (const service of services) {
                 try {
                     const response = await fetch(service);
@@ -97,20 +63,80 @@ class SpeedTestRumax {
             
             // Если все сервисы недоступны
             ipDisplay.textContent = 'Не определен';
-            
         } catch (error) {
             ipDisplay.textContent = 'Ошибка определения';
         }
     }
-    
+
+    async displayUserGeo() {
+        const providerDisplay = document.getElementById('providerDisplay');
+        const locationDisplay = document.getElementById('locationDisplay');
+        
+        try {
+            // Используем несколько сервисов для определения провайдера и местоположения
+            const geoServices = [
+                'https://ipapi.co/json/',
+                'https://ipinfo.io/json',
+                'https://api.ipgeolocation.io/ipgeo?apiKey=free'
+            ];
+
+            for (const service of geoServices) {
+                try {
+                    const response = await fetch(service);
+                    if (!response.ok) continue;
+                    
+                    const data = await response.json();
+                    
+                    // Определяем провайдера
+                    let provider = data.org || data.isp || data.as || 'Не определен';
+                    
+                    // Очищаем название провайдера от технических префиксов
+                    provider = provider.replace(/^AS\d+\s+/i, ''); // Убираем AS номера
+                    provider = provider.replace(/\s+Inc\.?$/i, ''); // Убираем Inc.
+                    provider = provider.replace(/\s+LLC\.?$/i, ''); // Убираем LLC
+                    provider = provider.replace(/\s+Ltd\.?$/i, ''); // Убираем Ltd
+                    
+                    providerDisplay.textContent = provider;
+                    
+                    // Определяем местоположение
+                    const locationParts = [
+                        data.city,
+                        data.region || data.region_name,
+                        data.country_name || data.country
+                    ].filter(Boolean);
+                    
+                    const location = locationParts.length > 0 
+                        ? locationParts.join(', ') 
+                        : 'Не определено';
+                    
+                    locationDisplay.textContent = location;
+                    
+                    // Если получили данные, выходим из цикла
+                    if (provider !== 'Не определен' || location !== 'Не определено') {
+                        return;
+                    }
+                } catch (error) {
+                    continue;
+                }
+            }
+            
+            // Если все сервисы не сработали
+            providerDisplay.textContent = 'Не определен';
+            locationDisplay.textContent = 'Не определено';
+            
+        } catch (error) {
+            providerDisplay.textContent = 'Ошибка определения';
+            locationDisplay.textContent = 'Ошибка определения';
+        }
+    }
+
     generateResultId() {
         const resultId = 'RUMAX-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         document.getElementById('resultId').textContent = resultId;
     }
-    
+
     initRatingSystem() {
         const ratingButtons = document.querySelectorAll('.rating-btn');
-        
         ratingButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const score = parseInt(e.target.dataset.score);
@@ -118,23 +144,22 @@ class SpeedTestRumax {
             });
         });
     }
-    
+
     selectRating(score) {
         this.selectedRating = score;
         const ratingButtons = document.querySelectorAll('.rating-btn');
         const ratingResult = document.getElementById('ratingResult');
-        
+
         // Убираем выделение со всех кнопок
         ratingButtons.forEach(btn => {
             btn.classList.remove('selected', 'detractor', 'passive', 'promoter');
         });
-        
+
         // Выделяем выбранную кнопку и определяем категорию
         const selectedBtn = document.querySelector(`[data-score="${score}"]`);
         selectedBtn.classList.add('selected');
-        
+
         let category, message, categoryClass;
-        
         if (score <= 6) {
             category = 'Критик';
             message = `Спасибо за оценку ${score}/10! Мы учтем ваши замечания для улучшения сервиса.`;
@@ -151,22 +176,21 @@ class SpeedTestRumax {
             categoryClass = 'promoter';
             selectedBtn.classList.add('promoter');
         }
-        
+
         ratingResult.innerHTML = `<strong>${category}:</strong> ${message}`;
         ratingResult.className = `rating-result show ${categoryClass}`;
         
         console.log(`NPS Score: ${score}, Category: ${category}`);
     }
-    
+
     initShareButtons() {
         const shareButtons = document.querySelectorAll('.share-btn');
-        
         shareButtons.forEach((btn, index) => {
             btn.addEventListener('click', () => {
                 const url = window.location.href;
                 const text = `Проверил скорость интернета на SpeedTestRumax! ${url}`;
                 
-                switch(index) {
+                switch (index) {
                     case 0: // Копировать ссылку
                         this.copyToClipboard(url);
                         this.showNotification('Ссылка скопирована!');
@@ -189,7 +213,7 @@ class SpeedTestRumax {
             });
         });
     }
-    
+
     copyToClipboard(text) {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(text);
@@ -202,7 +226,7 @@ class SpeedTestRumax {
             document.body.removeChild(textArea);
         }
     }
-    
+
     showNotification(message) {
         const notification = document.createElement('div');
         notification.style.cssText = `
@@ -219,7 +243,7 @@ class SpeedTestRumax {
             animation: slideIn 0.3s ease;
         `;
         notification.textContent = message;
-        
+
         if (!document.querySelector('#notification-styles')) {
             const style = document.createElement('style');
             style.id = 'notification-styles';
@@ -235,9 +259,9 @@ class SpeedTestRumax {
             `;
             document.head.appendChild(style);
         }
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.style.animation = 'slideOut 0.3s ease';
             setTimeout(() => {
@@ -247,36 +271,7 @@ class SpeedTestRumax {
             }, 300);
         }, 3000);
     }
-    
-    showServerModal() {
-        document.getElementById('serverModal').classList.add('active');
-        document.querySelectorAll('.server-option').forEach(option => {
-            option.classList.remove('selected');
-            if (option.dataset.server === this.currentServer) {
-                option.classList.add('selected');
-            }
-        });
-    }
-    
-    hideServerModal() {
-        document.getElementById('serverModal').classList.remove('active');
-    }
-    
-    selectServer(serverId) {
-        this.currentServer = serverId;
-        const server = this.servers[serverId];
-        
-        const serverProvider = document.querySelector('.server-provider strong');
-        const serverLocation = document.querySelector('.server-location');
-        
-        const [city, provider] = server.name.split(' - ');
-        serverProvider.textContent = provider.toUpperCase();
-        serverLocation.textContent = city + ', Россия';
-        
-        this.hideServerModal();
-        this.showNotification(`Сервер изменен на ${city}`);
-    }
-    
+
     async startSpeedTest() {
         if (this.isRunning) return;
         
@@ -309,7 +304,6 @@ class SpeedTestRumax {
             // Завершение
             progress.style.width = '100%';
             buttonText.textContent = 'ТЕСТ ЗАВЕРШЕН';
-            
             this.showNotification('Тест скорости завершен!');
             
             setTimeout(() => {
@@ -323,6 +317,7 @@ class SpeedTestRumax {
             console.error('Ошибка теста:', error);
             buttonText.textContent = 'ОШИБКА ТЕСТА';
             this.showNotification('Произошла ошибка при тестировании');
+            
             setTimeout(() => {
                 buttonText.textContent = 'НАЧАТЬ ТЕСТ';
                 progress.style.width = '0%';
@@ -331,14 +326,14 @@ class SpeedTestRumax {
             }, 2000);
         }
     }
-    
+
     resetValues() {
         document.getElementById('downloadSpeed').textContent = '0.00';
         document.getElementById('uploadSpeed').textContent = '0.00';
         document.getElementById('pingValue').textContent = '0';
         document.getElementById('jitterValue').textContent = '0';
     }
-    
+
     // РЕАЛЬНОЕ измерение пинга
     async testRealPing() {
         const pingTimes = [];
@@ -351,7 +346,7 @@ class SpeedTestRumax {
             'https://jsonplaceholder.typicode.com/posts/1',
             'https://httpbin.org/uuid'
         ];
-        
+
         for (let i = 0; i < 10; i++) {
             const url = pingUrls[i % pingUrls.length] + '?t=' + Date.now();
             const startTime = performance.now();
@@ -378,7 +373,7 @@ class SpeedTestRumax {
             
             await this.sleep(100);
         }
-        
+
         if (pingTimes.length > 0) {
             // Вычисляем реальный джиттер
             const avgPing = pingTimes.reduce((a, b) => a + b, 0) / pingTimes.length;
@@ -389,7 +384,7 @@ class SpeedTestRumax {
             jitterElement.textContent = jitter;
         }
     }
-    
+
     // РЕАЛЬНОЕ измерение скорости загрузки
     async testRealDownload() {
         const downloadElement = document.getElementById('downloadSpeed');
@@ -403,27 +398,26 @@ class SpeedTestRumax {
                 'https://mirror.yandex.ru/speedtest/10mb.bin',
                 'https://download.microsoft.com/download/2/0/E/20E90413-712F-438C-988E-FDAA79A8AC3D/dotnetfx35.exe'
             ];
-            
+
             // Тестируем параллельно несколько соединений
             const promises = testUrls.slice(0, 3).map(url => this.measureDownloadSpeed(url, downloadElement));
-            
             const results = await Promise.allSettled(promises);
+            
             const successfulResults = results
                 .filter(result => result.status === 'fulfilled')
                 .map(result => result.value);
-            
+
             if (successfulResults.length > 0) {
                 maxSpeed = Math.max(...successfulResults);
                 downloadElement.textContent = maxSpeed.toFixed(2);
             }
-            
         } catch (error) {
             console.error('Download test error:', error);
             // Fallback к простому тесту
             await this.measureDownloadSpeed('https://httpbin.org/bytes/10485760', downloadElement);
         }
     }
-    
+
     async measureDownloadSpeed(url, element) {
         const startTime = performance.now();
         let totalBytes = 0;
@@ -456,7 +450,6 @@ class SpeedTestRumax {
             
             const finalDuration = (performance.now() - startTime) / 1000;
             const finalSpeed = (totalBytes * 8) / (finalDuration * 1000000);
-            
             return finalSpeed;
             
         } catch (error) {
@@ -464,7 +457,7 @@ class SpeedTestRumax {
             return 0;
         }
     }
-    
+
     // РЕАЛЬНОЕ измерение скорости отдачи
     async testRealUpload() {
         const uploadElement = document.getElementById('uploadSpeed');
@@ -481,12 +474,11 @@ class SpeedTestRumax {
                     uploadElement.textContent = speed.toFixed(2);
                 }
             }
-            
         } catch (error) {
             console.error('Upload test error:', error);
         }
     }
-    
+
     async measureUploadSpeed(dataSize, element) {
         try {
             // Создаем реальные данные
@@ -494,16 +486,16 @@ class SpeedTestRumax {
             for (let i = 0; i < dataSize; i++) {
                 testData[i] = Math.floor(Math.random() * 256);
             }
-            
+
             const startTime = performance.now();
-            
+
             // Отправляем на несколько endpoint'ов
             const uploadUrls = [
                 'https://httpbin.org/post',
                 'https://postman-echo.com/post',
                 'https://reqres.in/api/users'
             ];
-            
+
             for (const url of uploadUrls) {
                 try {
                     const response = await fetch(url, {
@@ -514,27 +506,25 @@ class SpeedTestRumax {
                             'Content-Type': 'application/octet-stream'
                         }
                     });
-                    
+
                     if (response.ok) {
                         const endTime = performance.now();
                         const duration = (endTime - startTime) / 1000; // секунды
                         const speedMbps = (dataSize * 8) / (duration * 1000000); // Мбит/с
-                        
                         return speedMbps;
                     }
                 } catch (error) {
                     continue; // Пробуем следующий URL
                 }
             }
-            
+
             return 0;
-            
         } catch (error) {
             console.error('Upload measurement error:', error);
             return 0;
         }
     }
-    
+
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -558,9 +548,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }, Math.random() * 1000);
         });
     };
-    
+
     animateNumbers();
-    
+
     // Эффект частиц в фоне
     const createParticles = () => {
         const particlesContainer = document.createElement('div');
@@ -574,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
             pointer-events: none;
             z-index: -1;
         `;
-        
+
         for (let i = 0; i < 50; i++) {
             const particle = document.createElement('div');
             particle.style.cssText = `
@@ -589,9 +579,9 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             particlesContainer.appendChild(particle);
         }
-        
+
         document.body.appendChild(particlesContainer);
     };
-    
+
     createParticles();
 });
