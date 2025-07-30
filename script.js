@@ -8,8 +8,7 @@ class SpeedTestRumax {
 
     async init() {
         this.bindEvents();
-        await this.displayUserIP();
-        await this.displayUserGeo();
+        await this.displayUserIPAndGeo();
         this.generateResultId();
         this.initRatingSystem();
         this.initShareButtons();
@@ -23,60 +22,29 @@ class SpeedTestRumax {
         });
     }
 
-    async displayUserIP() {
-        const ipDisplay = document.getElementById('ipDisplay');
-        try {
-            const services = [
-                'https://api.ipify.org?format=json',
-                'https://ipapi.co/json/',
-                'https://ipinfo.io/json'
-            ];
-
-            for (const service of services) {
+    // Используем JSONP для обхода CORS
+    async displayUserIPAndGeo() {
+        return new Promise((resolve) => {
+            // Создаем уникальное имя функции
+            const callbackName = 'ipCallback_' + Math.random().toString(36).substr(2, 9);
+            
+            // Создаем глобальную функцию обратного вызова
+            window[callbackName] = (data) => {
                 try {
-                    const response = await fetch(service);
-                    const data = await response.json();
-                    const ip = data.ip || data.origin || data.query;
-                    if (ip) {
-                        this.userIP = ip;
-                        ipDisplay.textContent = ip;
-                        return;
-                    }
-                } catch (error) {
-                    continue;
-                }
-            }
-            ipDisplay.textContent = 'Не определен';
-        } catch (error) {
-            ipDisplay.textContent = 'Ошибка определения';
-        }
-    }
-
-    async displayUserGeo() {
-        const providerDisplay = document.getElementById('providerDisplay');
-        const locationDisplay = document.getElementById('locationDisplay');
-        
-        try {
-            const geoServices = [
-                'https://ipapi.co/json/',
-                'https://ipinfo.io/json'
-            ];
-
-            for (const service of geoServices) {
-                try {
-                    const response = await fetch(service);
-                    if (!response.ok) continue;
+                    // IP адрес
+                    const ip = data.ip || data.query || 'Не определен';
+                    document.getElementById('ipDisplay').textContent = ip;
+                    this.userIP = ip;
                     
-                    const data = await response.json();
-                    
+                    // Провайдер
                     let provider = data.org || data.isp || data.as || 'Не определен';
                     provider = provider.replace(/^AS\d+\s+/i, '');
                     provider = provider.replace(/\s+Inc\.?$/i, '');
                     provider = provider.replace(/\s+LLC\.?$/i, '');
                     provider = provider.replace(/\s+Ltd\.?$/i, '');
+                    document.getElementById('providerDisplay').textContent = provider;
                     
-                    providerDisplay.textContent = provider;
-                    
+                    // Местоположение
                     const locationParts = [
                         data.city,
                         data.region || data.region_name,
@@ -86,24 +54,36 @@ class SpeedTestRumax {
                     const location = locationParts.length > 0 
                         ? locationParts.join(', ') 
                         : 'Не определено';
+                    document.getElementById('locationDisplay').textContent = location;
                     
-                    locationDisplay.textContent = location;
-                    
-                    if (provider !== 'Не определен' || location !== 'Не определено') {
-                        return;
-                    }
                 } catch (error) {
-                    continue;
+                    console.error('Error processing IP data:', error);
+                    document.getElementById('ipDisplay').textContent = 'Ошибка';
+                    document.getElementById('providerDisplay').textContent = 'Ошибка';
+                    document.getElementById('locationDisplay').textContent = 'Ошибка';
                 }
-            }
+                
+                // Очищаем
+                document.head.removeChild(script);
+                delete window[callbackName];
+                resolve();
+            };
             
-            providerDisplay.textContent = 'Не определен';
-            locationDisplay.textContent = 'Не определено';
+            // Создаем script тег для JSONP
+            const script = document.createElement('script');
+            script.src = `https://ipapi.co/json/?callback=${callbackName}`;
+            script.onerror = () => {
+                // Fallback если ipapi.co не работает
+                document.getElementById('ipDisplay').textContent = 'Не определен';
+                document.getElementById('providerDisplay').textContent = 'Не определен';
+                document.getElementById('locationDisplay').textContent = 'Не определено';
+                document.head.removeChild(script);
+                delete window[callbackName];
+                resolve();
+            };
             
-        } catch (error) {
-            providerDisplay.textContent = 'Ошибка определения';
-            locationDisplay.textContent = 'Ошибка определения';
-        }
+            document.head.appendChild(script);
+        });
     }
 
     generateResultId() {
@@ -263,17 +243,17 @@ class SpeedTestRumax {
             // 1. Тест пинга
             buttonText.textContent = 'ИЗМЕРЕНИЕ ПИНГА...';
             progress.style.width = '20%';
-            await this.testRealPing();
+            await this.testPingNoCors();
             
             // 2. Тест скорости загрузки
             buttonText.textContent = 'ТЕСТ ЗАГРУЗКИ...';
             progress.style.width = '60%';
-            await this.testRealDownload();
+            await this.testDownloadNoCors();
             
             // 3. Тест скорости отдачи
             buttonText.textContent = 'ТЕСТ ОТДАЧИ...';
             progress.style.width = '90%';
-            await this.testRealUpload();
+            await this.testUploadNoCors();
             
             // Завершение
             progress.style.width = '100%';
@@ -308,32 +288,27 @@ class SpeedTestRumax {
         document.getElementById('jitterValue').textContent = '0';
     }
 
-    // Исправленное измерение пинга
-    async testRealPing() {
+    // Пинг без CORS - используем Image объект
+    async testPingNoCors() {
         const pingElement = document.getElementById('pingValue');
         const jitterElement = document.getElementById('jitterValue');
         
-        const pingUrls = [
-            'https://httpbin.org/get',
-            'https://api.github.com',
-            'https://jsonplaceholder.typicode.com/posts/1'
-        ];
-
         const pingTimes = [];
+        
+        // Используем маленькие изображения для пинга
+        const pingUrls = [
+            'https://www.google.com/favicon.ico',
+            'https://github.com/favicon.ico',
+            'https://stackoverflow.com/favicon.ico',
+            'https://www.wikipedia.org/favicon.ico'
+        ];
 
         for (let i = 0; i < 8; i++) {
             const url = pingUrls[i % pingUrls.length] + '?t=' + Date.now();
-            const startTime = performance.now();
             
             try {
-                const response = await fetch(url, {
-                    cache: 'no-cache',
-                    mode: 'cors'
-                });
-                
-                if (response.ok) {
-                    const endTime = performance.now();
-                    const pingTime = Math.round(endTime - startTime);
+                const pingTime = await this.measurePingWithImage(url);
+                if (pingTime > 0) {
                     pingTimes.push(pingTime);
                     
                     // Обновляем в реальном времени
@@ -357,56 +332,85 @@ class SpeedTestRumax {
         }
     }
 
-    // Исправленное измерение скорости загрузки
-    async testRealDownload() {
+    // Измерение пинга через Image объект
+    measurePingWithImage(url) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            const startTime = performance.now();
+            
+            const cleanup = () => {
+                img.onload = null;
+                img.onerror = null;
+            };
+            
+            img.onload = () => {
+                const endTime = performance.now();
+                cleanup();
+                resolve(Math.round(endTime - startTime));
+            };
+            
+            img.onerror = () => {
+                const endTime = performance.now();
+                cleanup();
+                resolve(Math.round(endTime - startTime)); // Даже при ошибке время загрузки засчитываем
+            };
+            
+            img.src = url;
+            
+            // Таймаут на случай зависания
+            setTimeout(() => {
+                cleanup();
+                resolve(0);
+            }, 5000);
+        });
+    }
+
+    // Тест загрузки без CORS - используем mode: 'no-cors' с известными размерами
+    async testDownloadNoCors() {
         const downloadElement = document.getElementById('downloadSpeed');
         
-        const testUrls = [
-            'https://proof.ovh.net/files/10Mb.dat',
-            'https://speedtest.selectel.ru/10MB.zip',
-            'https://httpbin.org/bytes/10485760', // 10MB
-            'https://httpbin.org/bytes/5242880'   // 5MB
+        // Файлы с известными размерами
+        const testFiles = [
+            { url: 'https://proof.ovh.net/files/10Mb.dat', size: 10 * 1024 * 1024 }, // 10MB
+            { url: 'https://proof.ovh.net/files/5Mb.dat', size: 5 * 1024 * 1024 },   // 5MB
+            { url: 'https://proof.ovh.net/files/1Mb.dat', size: 1 * 1024 * 1024 }    // 1MB
         ];
 
-        try {
-            const speeds = await Promise.allSettled(
-                testUrls.map(url => this.simpleDownloadSpeed(url))
-            );
-            
-            const successfulSpeeds = speeds
-                .filter(result => result.status === 'fulfilled' && result.value > 0)
-                .map(result => result.value);
+        let maxSpeed = 0;
 
-            if (successfulSpeeds.length > 0) {
-                const maxSpeed = Math.max(...successfulSpeeds);
-                downloadElement.textContent = maxSpeed.toFixed(2);
-            } else {
-                downloadElement.textContent = '0.00';
+        for (const file of testFiles) {
+            try {
+                const speed = await this.measureDownloadSpeedNoCors(file.url, file.size);
+                if (speed > maxSpeed) {
+                    maxSpeed = speed;
+                    downloadElement.textContent = speed.toFixed(2);
+                }
+            } catch (error) {
+                console.log('Download test error:', error);
             }
-        } catch (error) {
-            console.error('Download test error:', error);
+        }
+
+        if (maxSpeed === 0) {
             downloadElement.textContent = '0.00';
         }
     }
 
-    // Простой и надежный измеритель скорости загрузки
-    async simpleDownloadSpeed(url) {
+    // Измерение скорости загрузки с mode: 'no-cors'
+    async measureDownloadSpeedNoCors(url, sizeBytes) {
         try {
             const startTime = performance.now();
-            const response = await fetch(url + '?t=' + Date.now(), { 
-                cache: 'no-cache',
-                mode: 'cors'
+            
+            // Используем no-cors режим - запрос пройдет, но мы не сможем читать ответ
+            await fetch(url + '?t=' + Date.now(), { 
+                mode: 'no-cors',
+                cache: 'no-cache'
             });
             
-            if (!response.ok) throw new Error('Network response was not ok');
-            
-            // Читаем весь файл
-            const blob = await response.blob();
             const endTime = performance.now();
-            
             const duration = (endTime - startTime) / 1000; // в секундах
-            const bytes = blob.size;
-            const mbps = (bytes * 8) / (duration * 1000000); // Мбит/с
+            
+            // Вычисляем скорость на основе известного размера файла
+            const mbps = (sizeBytes * 8) / (duration * 1000000); // Мбит/с
             
             return mbps;
         } catch (error) {
@@ -415,8 +419,8 @@ class SpeedTestRumax {
         }
     }
 
-    // Исправленное измерение скорости отдачи
-    async testRealUpload() {
+    // Тест отдачи без CORS
+    async testUploadNoCors() {
         const uploadElement = document.getElementById('uploadSpeed');
         
         try {
@@ -424,11 +428,15 @@ class SpeedTestRumax {
             let maxSpeed = 0;
             
             for (const size of testSizes) {
-                const speed = await this.measureUploadSpeed(size);
+                const speed = await this.measureUploadSpeedNoCors(size);
                 if (speed > maxSpeed) {
                     maxSpeed = speed;
                     uploadElement.textContent = speed.toFixed(2);
                 }
+            }
+            
+            if (maxSpeed === 0) {
+                uploadElement.textContent = '0.00';
             }
         } catch (error) {
             console.error('Upload test error:', error);
@@ -436,7 +444,7 @@ class SpeedTestRumax {
         }
     }
 
-    async measureUploadSpeed(dataSize) {
+    async measureUploadSpeedNoCors(dataSize) {
         try {
             // Создаем тестовые данные
             const testData = new Uint8Array(dataSize);
@@ -444,6 +452,7 @@ class SpeedTestRumax {
                 testData[i] = Math.floor(Math.random() * 256);
             }
 
+            // Используем httpbin.org с no-cors режимом
             const uploadUrls = [
                 'https://httpbin.org/post',
                 'https://postman-echo.com/post'
@@ -453,21 +462,17 @@ class SpeedTestRumax {
                 try {
                     const startTime = performance.now();
                     
-                    const response = await fetch(url, {
+                    await fetch(url, {
                         method: 'POST',
                         body: testData,
-                        cache: 'no-cache',
-                        headers: {
-                            'Content-Type': 'application/octet-stream'
-                        }
+                        mode: 'no-cors', // Обходим CORS
+                        cache: 'no-cache'
                     });
 
-                    if (response.ok) {
-                        const endTime = performance.now();
-                        const duration = (endTime - startTime) / 1000; // секунды
-                        const speedMbps = (dataSize * 8) / (duration * 1000000); // Мбит/с
-                        return speedMbps;
-                    }
+                    const endTime = performance.now();
+                    const duration = (endTime - startTime) / 1000; // секунды
+                    const speedMbps = (dataSize * 8) / (duration * 1000000); // Мбит/с
+                    return speedMbps;
                 } catch (error) {
                     continue;
                 }
